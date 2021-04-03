@@ -3,27 +3,25 @@ import 'dart:io';
 
 import 'package:dotenv/dotenv.dart';
 import 'package:openid_client/openid_client_io.dart';
+import 'package:path/path.dart' as path;
 
 import 'auth/credential.dart';
 import 'utils/error.dart';
-import 'package:path/path.dart' as path;
 
 class Credentials {
-  static Credential _globalAppDefaultCred;
+  static Credential? _globalAppDefaultCred;
 
   static Future<void> logout() async {
-    var f = File(firebaseAdminCredentialPath);
+    var f = File(firebaseAdminCredentialPath!);
     await f.delete();
   }
 
-  static Future<Credential> login(
-      {String clientId, String clientSecret}) async {
+  static Future<Credential?> login({String? clientId, String? clientSecret}) async {
     var issuer = await Issuer.discover(Issuer.google);
 
     var client = Client(
       issuer,
-      clientId ??
-          '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com',
+      clientId ?? '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com',
       clientSecret: clientSecret ?? 'j9iVZfS8kkCEFUPaAeJV0sAi',
     );
 
@@ -44,16 +42,18 @@ class Credentials {
     var v = {
       'client_id': client.clientId,
       'client_secret': client.clientSecret,
-      'refresh_token': c.response['refresh_token']
+      'refresh_token': c.response?['refresh_token']
     };
 
-    var f = File(firebaseAdminCredentialPath);
-    f.parent.createSync(recursive: true);
-    f.writeAsStringSync(JsonEncoder.withIndent(' ').convert(v));
+    if (firebaseAdminCredentialPath != null) {
+      var f = File(firebaseAdminCredentialPath!);
+      f.parent.createSync(recursive: true);
+      f.writeAsStringSync(JsonEncoder.withIndent(' ').convert(v));
 
-    var credential = RefreshTokenCredential(v);
+      var credential = RefreshTokenCredential(v);
 
-    return credential;
+      return credential;
+    }
   }
 
   /// Returns a [Credential] created from the Google Application Default
@@ -69,8 +69,7 @@ class Credentials {
   ///   credentials obtained with [Credentials.login]
   ///   * gcloud's application default credentials
   ///   * credentials from the firebase tools
-  static Credential applicationDefault() =>
-      _globalAppDefaultCred ??= _getApplicationDefault();
+  static Credential? applicationDefault() => _globalAppDefaultCred ??= _getApplicationDefault();
 
   /// Returns [Credential] created from the provided service account that grants
   /// admin access to Firebase services.
@@ -90,13 +89,13 @@ class Credentials {
     throw UnimplementedError();
   }
 
-  static String get _gcloudCredentialPath {
+  static String? get _gcloudCredentialPath {
     var config = _configDir;
     if (config == null) return null;
     return path.join(config, 'gcloud/application_default_credentials.json');
   }
 
-  static String get _firebaseConfigPath {
+  static String? get _firebaseConfigPath {
     var config = _configDir;
     if (config == null) return null;
     return path.join(config, 'configstore/firebase-tools.json');
@@ -108,14 +107,13 @@ class Credentials {
   /// On windows, this is `$APP_DATA/firebase_admin/application_default_credentials.json`,
   /// on other platforms, this is `$HOME/.config/firebase_admin/application_default_credentials.json`.
   ///
-  static String get firebaseAdminCredentialPath {
+  static String? get firebaseAdminCredentialPath {
     var config = _configDir;
     if (config == null) return null;
-    return path.join(
-        config, 'firebase_admin/application_default_credentials.json');
+    return path.join(config, 'firebase_admin/application_default_credentials.json');
   }
 
-  static String get _configDir {
+  static String? get _configDir {
     // Windows has a dedicated low-rights location for apps at ~/Application Data
     if (Platform.isWindows) {
       return env['APPDATA'];
@@ -123,23 +121,22 @@ class Credentials {
 
     // On *nix the gcloud cli creates a . dir.
     if (env.containsKey('HOME')) {
-      return path.join(env['HOME'], '.config');
+      return path.join(env['HOME']!, '.config');
     }
     return null;
   }
 
-  static Credential _getApplicationDefault() {
+  static Credential? _getApplicationDefault() {
     var f = File('service-account.json');
     if (f.existsSync()) {
       return _credentialFromFile(f.path);
     }
     if (env['GOOGLE_APPLICATION_CREDENTIALS'] != null) {
-      return _credentialFromFile(env['GOOGLE_APPLICATION_CREDENTIALS']);
+      return _credentialFromFile(env['GOOGLE_APPLICATION_CREDENTIALS']!);
     }
 
     if (firebaseAdminCredentialPath != null) {
-      final refreshToken =
-          _readCredentialFile(firebaseAdminCredentialPath, true);
+      final refreshToken = _readCredentialFile(firebaseAdminCredentialPath!, true);
       if (refreshToken != null) {
         return RefreshTokenCredential(refreshToken);
       }
@@ -147,12 +144,11 @@ class Credentials {
 
     // It is OK to not have this file. If it is present, it must be valid.
     if (_gcloudCredentialPath != null) {
-      final refreshToken = _readCredentialFile(_gcloudCredentialPath, true);
+      final refreshToken = _readCredentialFile(_gcloudCredentialPath!, true);
       if (refreshToken != null) {
         // End user credentials from the Google Cloud SDK or Google Cloud Shell
         // are not supported
-        if (refreshToken['client_id'] !=
-            '764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com') {
+        if (refreshToken['client_id'] != '764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com') {
           return RefreshTokenCredential(refreshToken);
         }
       }
@@ -160,12 +156,11 @@ class Credentials {
 
     // When firebase cli installed, use it's token
     if (_firebaseConfigPath != null) {
-      var f = File(_firebaseConfigPath);
+      var f = File(_firebaseConfigPath!);
       if (f.existsSync()) {
         var v = json.decode(f.readAsStringSync());
         return RefreshTokenCredential(v['tokens']
-          ..['client_id'] =
-              '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com'
+          ..['client_id'] = '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com'
           ..['client_secret'] = 'j9iVZfS8kkCEFUPaAeJV0sAi');
       }
     }
@@ -195,8 +190,7 @@ class Credentials {
     );
   }
 
-  static Map<String, dynamic> _readCredentialFile(String filePath,
-      [bool ignoreMissing = false]) {
+  static Map<String, dynamic>? _readCredentialFile(String filePath, [bool ignoreMissing = false]) {
     String fileText;
     try {
       fileText = File(filePath).readAsStringSync();
@@ -205,15 +199,13 @@ class Credentials {
         return null;
       }
 
-      throw FirebaseAppError.invalidCredential(
-          'Failed to read credentials from file ${filePath}: $error');
+      throw FirebaseAppError.invalidCredential('Failed to read credentials from file $filePath: $error');
     }
 
     try {
       return json.decode(fileText);
     } catch (error) {
-      throw FirebaseAppError.invalidCredential(
-          'Failed to parse contents of the credentials file as an object: $error');
+      throw FirebaseAppError.invalidCredential('Failed to parse contents of the credentials file as an object: $error');
     }
   }
 }
@@ -223,14 +215,14 @@ class Credentials {
 abstract class Credential {
   /// Returns a Google OAuth2 [AccessToken] object used to authenticate with
   /// Firebase services.
-  Future<AccessToken> getAccessToken();
+  Future<AccessToken?> getAccessToken();
 }
 
 /// Google OAuth2 access token object used to authenticate with Firebase
 /// services.
 abstract class AccessToken {
   /// The actual Google OAuth2 access token.
-  String get accessToken;
+  String? get accessToken;
 
-  DateTime get expirationTime;
+  DateTime? get expirationTime;
 }

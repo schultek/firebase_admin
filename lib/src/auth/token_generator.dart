@@ -9,13 +9,11 @@ import '../utils/validator.dart' as validator;
 class FirebaseTokenGenerator {
   final App app;
 
-  static FirebaseTokenGenerator Function(App app) factory =
-      (app) => FirebaseTokenGenerator(app);
+  static FirebaseTokenGenerator Function(App app) factory = (app) => FirebaseTokenGenerator(app);
 
   FirebaseTokenGenerator(this.app);
 
-  Certificate get certificate =>
-      (app.options.credential as ServiceAccountCredential).certificate;
+  Certificate get certificate => (app.options.credential as ServiceAccountCredential).certificate;
 
   // List of blacklisted claims which cannot be provided when creating a custom token
   static const blacklistedClaims = [
@@ -40,19 +38,16 @@ class FirebaseTokenGenerator {
       'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit';
 
   /// Creates a new Firebase Auth Custom token.
-  Future<String> createCustomToken(
-      String uid, Map<String, dynamic> developerClaims) async {
+  Future<String> createCustomToken(String uid, Map<String, dynamic>? developerClaims) async {
     if (!validator.isUid(uid)) {
-      throw FirebaseAuthError.invalidArgument(
-          'First argument to createCustomToken() must be a non-empty string uid.');
+      throw FirebaseAuthError.invalidArgument('First argument to createCustomToken() must be a non-empty string uid.');
     }
 
     developerClaims ??= {};
 
     for (var key in developerClaims.keys) {
       if (blacklistedClaims.contains(key)) {
-        throw FirebaseAuthError.invalidArgument(
-            'Developer claim "$key" is reserved and cannot be specified.');
+        throw FirebaseAuthError.invalidArgument('Developer claim "$key" is reserved and cannot be specified.');
       }
     }
 

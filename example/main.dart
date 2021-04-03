@@ -28,8 +28,4 @@ void main() async {
   } on FirebaseException catch (e) {
     print(e.message);
   }
-
-  await for (var v in app.storage().bucket().list()) {
-    print(v.name);
-  }
 }

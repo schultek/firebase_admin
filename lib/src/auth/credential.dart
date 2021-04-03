@@ -1,35 +1,28 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
-import 'package:x509/x509.dart';
-import '../utils/error.dart';
+import 'dart:io';
+
+import 'package:clock/clock.dart';
+import 'package:crypto_keys/crypto_keys.dart';
 import 'package:http/http.dart' as http;
 import 'package:jose/jose.dart';
-import 'package:crypto_keys/crypto_keys.dart';
-import '../credential.dart';
-import 'package:clock/clock.dart';
 import 'package:openid_client/openid_client.dart' as openid;
+import 'package:x509/x509.dart';
+
+import '../credential.dart';
+import '../utils/error.dart';
 
 /// Contains the properties necessary to use service-account JSON credentials.
 class Certificate {
-  final String projectId;
+  final String? projectId;
   final JsonWebKey privateKey;
   final String clientEmail;
 
-  Certificate({this.projectId, this.privateKey, this.clientEmail}) {
-    if (privateKey == null) {
-      throw FirebaseAppError.invalidCredential(
-          'Certificate object must contain a string "private_key" property.');
-    } else if (clientEmail == null) {
-      throw FirebaseAppError.invalidCredential(
-          'Certificate object must contain a string "client_email" property.');
-    }
-  }
+  Certificate({this.projectId, required this.privateKey, required this.clientEmail});
 
   factory Certificate.fromPath(String filePath) {
     try {
-      return Certificate.fromJson(
-          json.decode(File(filePath).readAsStringSync()));
+      return Certificate.fromJson(json.decode(File(filePath).readAsStringSync()));
     } on FirebaseException {
       rethrow;
     } catch (error) {
@@ -41,12 +34,6 @@ class Certificate {
   }
 
   factory Certificate.fromJson(Map<String, dynamic> json) {
-    if (json == null) {
-      throw FirebaseAppError.invalidCredential(
-        'Certificate object must be an object.',
-      );
-    }
-
     var privateKey = json['private_key'];
     if (privateKey is! String) privateKey = null;
     var clientEmail = json['client_email'];
@@ -80,14 +67,12 @@ class Certificate {
       'kid': json['private_key_id']
     });
 
-    return Certificate(
-        projectId: json['project_id'], privateKey: k, clientEmail: clientEmail);
+    return Certificate(projectId: json['project_id'], privateKey: k, clientEmail: clientEmail);
   }
 }
 
 /// Implementation of Credential that uses a service account certificate.
-class ServiceAccountCredential extends _OpenIdCredential
-    implements FirebaseCredential {
+class ServiceAccountCredential extends _OpenIdCredential implements FirebaseCredential {
   @override
   final Certificate certificate;
 
@@ -127,19 +112,18 @@ class ServiceAccountCredential extends _OpenIdCredential
 }
 
 abstract class _OpenIdCredential implements Credential {
-  final String clientId;
-  final String clientSecret;
+  final String? clientId;
+  final String? clientSecret;
 
   _OpenIdCredential(this.clientId, this.clientSecret);
 
   Future<openid.Credential> createCredential(openid.Client client);
 
   @override
-  Future<AccessToken> getAccessToken() async {
+  Future<AccessToken?> getAccessToken() async {
     var issuer = await openid.Issuer.discover(openid.Issuer.google);
     var client = openid.Client(issuer, clientId, clientSecret: clientSecret);
-    return _OpenIdAccessToken(
-        await (await createCredential(client)).getTokenResponse());
+    return _OpenIdAccessToken(await (await createCredential(client)).getTokenResponse());
   }
 }
 
@@ -149,10 +133,10 @@ class _OpenIdAccessToken implements AccessToken {
   _OpenIdAccessToken(this._token);
 
   @override
-  String get accessToken => _token.accessToken;
+  String? get accessToken => _token.accessToken;
 
   @override
-  DateTime get expirationTime => _token.expiresAt;
+  DateTime? get expirationTime => _token.expiresAt;
 }
 
 /// Internal interface for credentials that can both generate access tokens and

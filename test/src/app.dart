@@ -1,26 +1,23 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:clock/clock.dart';
+import 'package:dotenv/dotenv.dart';
+import 'package:fake_async/fake_async.dart';
+import 'package:firebase_admin/firebase_admin.dart';
+import 'package:firebase_admin/src/app.dart';
 import 'package:firebase_admin/src/auth/credential.dart';
 import 'package:firebase_admin/src/credential.dart';
+import 'package:firebase_admin/src/service.dart';
 import 'package:test/test.dart';
 
-import 'package:firebase_admin/firebase_admin.dart';
-import 'package:firebase_admin/src/service.dart';
-import 'dart:async';
 import '../resources/mocks.dart' as mocks;
-import 'package:fake_async/fake_async.dart';
-import 'package:dotenv/dotenv.dart';
-
 import '../resources/mocks.dart';
-import 'package:firebase_admin/src/app.dart';
 
-Matcher throwsAppError([String message]) =>
-    throwsA(TypeMatcher<FirebaseAppError>()
-        .having((e) => e.message, 'message', message));
+Matcher throwsAppError([String? message]) =>
+    throwsA(TypeMatcher<FirebaseAppError>().having((e) => e.message, 'message', message));
 
-FirebaseService mockServiceFactory(App app,
-    [void Function(Map props) extendApp]) {
+FirebaseService mockServiceFactory(App app, [void Function(Map props)? extendApp]) {
   return MockService(app);
 }
 
@@ -43,7 +40,7 @@ void main() {
   var admin = FirebaseAdmin.instance;
 
   group('App', () {
-    App mockApp;
+    late App mockApp;
 
     setUp(() {
       mockApp = admin.initializeApp(mocks.appOptions, mocks.appName);
@@ -61,10 +58,7 @@ void main() {
     group('App.name', () {
       test('should throw if the app has already been deleted', () async {
         await mockApp.delete();
-        expect(
-            () => mockApp.name,
-            throwsAppError(
-                'Firebase app named "${mocks.appName}" has already been deleted.'));
+        expect(() => mockApp.name, throwsAppError('Firebase app named "${mocks.appName}" has already been deleted.'));
       });
 
       test('should return the app\'s name', () {
@@ -92,9 +86,7 @@ void main() {
 
         expect(() {
           return mockApp.options;
-        },
-            throwsAppError(
-                'Firebase app named "${mocks.appName}" has already been deleted.'));
+        }, throwsAppError('Firebase app named "${mocks.appName}" has already been deleted.'));
       });
 
       test('should return the app\'s options', () {
@@ -102,24 +94,19 @@ void main() {
       });
 
       test('should ignore the config file when options is not null', () {
-        env[FirebaseAdmin.firebaseConfigVar] =
-            './test/resources/firebase_config.json';
+        env[FirebaseAdmin.firebaseConfigVar] = './test/resources/firebase_config.json';
         var app = admin.initializeApp(mocks.appOptionsNoDatabaseUrl);
         expect(app.options.databaseUrl, null);
         expect(app.options.projectId, null);
         expect(app.options.storageBucket, null);
       });
 
-      test(
-          'should throw when the environment variable points to non existing file',
-          () {
-        env[FirebaseAdmin.firebaseConfigVar] =
-            './test/resources/non_existant.json';
+      test('should throw when the environment variable points to non existing file', () {
+        env[FirebaseAdmin.firebaseConfigVar] = './test/resources/non_existant.json';
         expect(() {
           admin.initializeApp();
         },
-            throwsAppError(
-                'Failed to parse app options file: FileSystemException: '
+            throwsAppError('Failed to parse app options file: FileSystemException: '
                 "Cannot open file, path = './test/resources/non_existant.json' (OS Error: No such file or directory, errno = 2)"));
       });
 
@@ -132,10 +119,8 @@ void main() {
                 'Failed to parse app options file: FormatException: Unexpected character (at character 2)\n{,,\n ^\n'));
       });
 
-      test('should throw when the environment variable points to an empty file',
-          () {
-        env[FirebaseAdmin.firebaseConfigVar] =
-            './test/resources/firebase_config_empty.json';
+      test('should throw when the environment variable points to an empty file', () {
+        env[FirebaseAdmin.firebaseConfigVar] = './test/resources/firebase_config_empty.json';
         expect(() {
           admin.initializeApp();
         },
@@ -144,8 +129,7 @@ void main() {
       });
 
       test('should throw when the environment variable points to bad json', () {
-        env[FirebaseAdmin.firebaseConfigVar] =
-            './test/resources/firebase_config_bad.json';
+        env[FirebaseAdmin.firebaseConfigVar] = './test/resources/firebase_config_bad.json';
         expect(() {
           admin.initializeApp();
         },
@@ -154,8 +138,7 @@ void main() {
       });
 
       test('should ignore a bad config key in the config file', () {
-        env[FirebaseAdmin.firebaseConfigVar] =
-            './test/resources/firebase_config_bad_key.json';
+        env[FirebaseAdmin.firebaseConfigVar] = './test/resources/firebase_config_bad_key.json';
         var app = admin.initializeApp();
         expect(app.options.projectId, 'hipster-chat-mock');
         expect(app.options.databaseUrl, null);
@@ -173,20 +156,15 @@ void main() {
         expect(app.options.storageBucket, null);
       });
 
-      test(
-          'should not throw when the config file has a bad key and the config file is unused',
-          () {
-        env[FirebaseAdmin.firebaseConfigVar] =
-            './test/resources/firebase_config_bad_key.json';
+      test('should not throw when the config file has a bad key and the config file is unused', () {
+        env[FirebaseAdmin.firebaseConfigVar] = './test/resources/firebase_config_bad_key.json';
         var app = admin.initializeApp(mocks.appOptionsWithOverride);
         expect(app.options.projectId, 'project_id');
         expect(app.options.databaseUrl, 'https://databaseName.firebaseio.com');
         expect(app.options.storageBucket, 'bucketName.appspot.com');
       });
 
-      test(
-          'should not throw when the config json has a bad key and the config json is unused',
-          () {
+      test('should not throw when the config json has a bad key and the config json is unused', () {
         env[FirebaseAdmin.firebaseConfigVar] = '{'
             '"notAValidKeyValue": "The key value here is not valid.",'
             '"projectId": "hipster-chat-mock"'
@@ -197,11 +175,8 @@ void main() {
         expect(app.options.storageBucket, 'bucketName.appspot.com');
       });
 
-      test(
-          'should use explicitly specified options when available and ignore the config file',
-          () {
-        env[FirebaseAdmin.firebaseConfigVar] =
-            './test/resources/firebase_config.json';
+      test('should use explicitly specified options when available and ignore the config file', () {
+        env[FirebaseAdmin.firebaseConfigVar] = './test/resources/firebase_config.json';
         var app = admin.initializeApp(mocks.appOptions);
         expect(app.options.credential, TypeMatcher<ServiceAccountCredential>());
         expect(app.options.databaseUrl, 'https://databaseName.firebaseio.com');
@@ -210,17 +185,14 @@ void main() {
       });
 
       test('should not throw if some fields are missing', () {
-        env[FirebaseAdmin.firebaseConfigVar] =
-            './test/resources/firebase_config_partial.json';
+        env[FirebaseAdmin.firebaseConfigVar] = './test/resources/firebase_config_partial.json';
         var app = admin.initializeApp(mocks.appOptionsAuthDB);
         expect(app.options.databaseUrl, 'https://databaseName.firebaseio.com');
         expect(app.options.projectId, null);
         expect(app.options.storageBucket, null);
       });
 
-      test(
-          'should not throw when the config environment variable is not set, and some options are present',
-          () {
+      test('should not throw when the config environment variable is not set, and some options are present', () {
         var app = admin.initializeApp(mocks.appOptionsNoDatabaseUrl);
         expect(app.options.credential, TypeMatcher<ServiceAccountCredential>());
         expect(app.options.databaseUrl, null);
@@ -228,9 +200,7 @@ void main() {
         expect(app.options.storageBucket, null);
       });
 
-      test(
-          'should init with application default creds when no options provided and env variable is not set',
-          () {
+      test('should init with application default creds when no options provided and env variable is not set', () {
         var app = admin.initializeApp();
         expect(app.options.credential, Credentials.applicationDefault());
         expect(app.options.databaseUrl, null);
@@ -238,9 +208,7 @@ void main() {
         expect(app.options.storageBucket, null);
       });
 
-      test(
-          'should init with application default creds when no options provided and env variable is an empty json',
-          () {
+      test('should init with application default creds when no options provided and env variable is an empty json', () {
         env[FirebaseAdmin.firebaseConfigVar] = '{}';
         var app = admin.initializeApp();
         expect(app.options.credential, Credentials.applicationDefault());
@@ -249,11 +217,8 @@ void main() {
         expect(app.options.storageBucket, null);
       });
 
-      test(
-          'should init when no init arguments are provided and config var points to a file',
-          () {
-        env[FirebaseAdmin.firebaseConfigVar] =
-            './test/resources/firebase_config.json';
+      test('should init when no init arguments are provided and config var points to a file', () {
+        env[FirebaseAdmin.firebaseConfigVar] = './test/resources/firebase_config.json';
         var app = admin.initializeApp();
         expect(app.options.credential, Credentials.applicationDefault());
         expect(app.options.databaseUrl, 'https://hipster-chat.firebaseio.mock');
@@ -261,9 +226,7 @@ void main() {
         expect(app.options.storageBucket, 'hipster-chat.appspot.mock');
       });
 
-      test(
-          'should init when no init arguments are provided and config var is json',
-          () {
+      test('should init when no init arguments are provided and config var is json', () {
         env[FirebaseAdmin.firebaseConfigVar] = '{'
             '"databaseAuthVariableOverride":  { "some#key": "some#val" },'
             '"databaseURL": "https://hipster-chat.firebaseio.mock",'
@@ -284,13 +247,10 @@ void main() {
         await mockApp.delete();
         expect(() {
           return mockApp.delete();
-        },
-            throwsAppError(
-                'Firebase app named "${mocks.appName}" has already been deleted.'));
+        }, throwsAppError('Firebase app named "${mocks.appName}" has already been deleted.'));
       });
 
-      test('should call removeApp() on the Firebase namespace internals',
-          () async {
+      test('should call removeApp() on the Firebase namespace internals', () async {
         await mockApp.delete();
         expect(
             () => admin.app(mocks.appName),
@@ -304,10 +264,7 @@ void main() {
         var app = mockApp;
 
         await app.delete();
-        expect(
-            () => app.auth(),
-            throwsAppError(
-                'Firebase app named "${mocks.appName}" has already been deleted.'));
+        expect(() => app.auth(), throwsAppError('Firebase app named "${mocks.appName}" has already been deleted.'));
       });
 
       test('should return the Auth namespace', () {
@@ -331,41 +288,33 @@ void main() {
 
       tearDownAll(() {});
 
-      test(
-          'throws a custom credential implementation which returns invalid access tokens',
-          () {
-        var credential = MockCredential(
-            () => MockAccessToken(accessToken: null, expiresIn: null));
+      test('throws a custom credential implementation which returns invalid access tokens', () {
+        var credential = MockCredential(() => MockAccessToken(accessToken: null, expiresIn: null));
 
         var app = admin.initializeApp(AppOptions(credential: credential));
 
-        expect(() => app.internals.getToken(),
-            throwsAppError('Invalid access token generated'));
+        expect(() => app.internals.getToken(), throwsAppError('Invalid access token generated'));
       });
 
-      test(
-          'returns a valid token given a well-formed custom credential implementation',
-          () async {
-        var oracle = MockAccessToken(
-            accessToken: 'This is a custom token',
-            expiresIn: Duration(hours: 1));
+      test('returns a valid token given a well-formed custom credential implementation', () async {
+        var oracle = MockAccessToken(accessToken: 'This is a custom token', expiresIn: Duration(hours: 1));
         var credential = MockCredential(() => oracle);
 
         var app = admin.initializeApp(AppOptions(credential: credential));
 
         var token = await app.internals.getToken();
-        expect(token.accessToken, oracle.accessToken);
+        expect(token!.accessToken, oracle.accessToken);
         expect(token.expirationTime, oracle.expirationTime);
       });
 
       test('returns a valid token given no arguments', () async {
         var token = await mockApp.internals.getToken();
-        expect(token.accessToken, allOf(isNotNull, isNotEmpty));
+        expect(token!.accessToken, allOf(isNotNull, isNotEmpty));
         expect(token.expirationTime, isNotNull);
       });
       test('returns a valid token with force refresh', () async {
         var token = await mockApp.internals.getToken(true);
-        expect(token.accessToken, allOf(isNotNull, isNotEmpty));
+        expect(token!.accessToken, allOf(isNotNull, isNotEmpty));
         expect(token.expirationTime, isNotNull);
       });
       test('returns the cached token given no arguments', () async {
@@ -385,7 +334,7 @@ void main() {
         testFakeAsync((fake) async {
           // Force a token refresh.
           var token1 = await mockApp.internals.getToken(true);
-          var expiryIn = token1.expirationTime.difference(clock.now());
+          var expiryIn = token1!.expirationTime!.difference(clock.now());
           // Forward the clock to five minutes and one second setUp expiry.
           fake.elapse(expiryIn - Duration(minutes: 5, seconds: 1));
 
@@ -400,25 +349,21 @@ void main() {
         });
       });
 
-      test(
-          'retries to proactively refresh the token if a proactive refresh attempt fails',
-          () {
+      test('retries to proactively refresh the token if a proactive refresh attempt fails', () {
         return testFakeAsync((fake) async {
           var reject = false;
 
           await admin.app(mocks.appName).delete();
-          var mockApp =
-              admin.initializeApp(AppOptions(credential: MockCredential(() {
+          var mockApp = admin.initializeApp(AppOptions(credential: MockCredential(() {
             if (reject) throw Exception('Intentionally rejected');
-            return MockAccessToken(
-                accessToken: 'key', expiresIn: Duration(hours: 1));
+            return MockAccessToken(accessToken: 'key', expiresIn: Duration(hours: 1));
           })), mocks.appName);
           // Force a token refresh.
           var token1 = await mockApp.internals.getToken(true);
           // Stub the getToken() method to return a rejected promise.
           reject = true;
           // Forward the clock to exactly five minutes setUp expiry.
-          var expiryIn = token1.expirationTime.difference(clock.now());
+          var expiryIn = token1!.expirationTime!.difference(clock.now());
           fake.elapse(expiryIn - Duration(minutes: 5));
           // Forward the clock to exactly four minutes setUp expiry.
           fake.elapse(Duration(minutes: 1));
@@ -439,20 +384,16 @@ void main() {
         });
       });
 
-      test(
-          'stops retrying to proactively refresh the token after five attempts',
-          () {
+      test('stops retrying to proactively refresh the token after five attempts', () {
         return testFakeAsync((fake) async {
           var reject = false;
           var callCount = 0;
 
           await admin.app(mocks.appName).delete();
-          var mockApp =
-              admin.initializeApp(AppOptions(credential: MockCredential(() {
+          var mockApp = admin.initializeApp(AppOptions(credential: MockCredential(() {
             callCount++;
             if (reject) throw Exception('Intentionally rejected');
-            return MockAccessToken(
-                accessToken: 'key', expiresIn: Duration(hours: 1));
+            return MockAccessToken(accessToken: 'key', expiresIn: Duration(hours: 1));
           })), mocks.appName);
 
           // Force a token refresh.
@@ -463,7 +404,7 @@ void main() {
           callCount = 0;
 
           // Forward the clock to exactly five minutes setUp expiry.
-          var expiryIn = originalToken.expirationTime.difference(clock.now());
+          var expiryIn = originalToken!.expirationTime!.difference(clock.now());
           fake.elapse(expiryIn - Duration(minutes: 5));
 
           var token = await mockApp.internals.getToken();
@@ -534,8 +475,7 @@ void main() {
           // Force a token refresh.
           var token1 = await mockApp.internals.getToken(true);
           // Forward the clock to five minutes and one second setUp expiry.
-          var expiryInMilliseconds =
-              token1.expirationTime.difference(clock.now());
+          var expiryInMilliseconds = token1!.expirationTime!.difference(clock.now());
           fake.elapse(expiryInMilliseconds - Duration(minutes: 5, seconds: 1));
 
           // Force a token refresh.
@@ -550,7 +490,7 @@ void main() {
           expect(token2, token3);
 
           // Forward the clock to exactly five minutes setUp the refreshed token's expiry.
-          expiryInMilliseconds = token3.expirationTime.difference(clock.now());
+          expiryInMilliseconds = token3!.expirationTime!.difference(clock.now());
           fake.elapse(expiryInMilliseconds - Duration(minutes: 5));
 
           var token4 = await mockApp.internals.getToken();
@@ -559,16 +499,11 @@ void main() {
         });
       });
 
-      test(
-          'proactively refreshes the token at the next full minute if it expires in five minutes or less',
-          () {
+      test('proactively refreshes the token at the next full minute if it expires in five minutes or less', () {
         testFakeAsync((fake) async {
           await admin.app(mocks.appName).delete();
-          var mockApp =
-              admin.initializeApp(AppOptions(credential: MockCredential(() {
-            return MockAccessToken(
-                accessToken: 'key',
-                expiresIn: Duration(minutes: 3, seconds: 10));
+          var mockApp = admin.initializeApp(AppOptions(credential: MockCredential(() {
+            return MockAccessToken(accessToken: 'key', expiresIn: Duration(minutes: 3, seconds: 10));
           })), mocks.appName);
 
           // Force a token refresh.
@@ -603,7 +538,7 @@ void main() {
         }, count: 1));
 
         var token = await mockApp.internals.getToken();
-        expect(calledWithValue, token.accessToken);
+        expect(calledWithValue, token!.accessToken);
       });
       test('can be called twice', () async {
         var values = [];
@@ -613,7 +548,7 @@ void main() {
 
         var token = await mockApp.internals.getToken();
 
-        expect(values, [token.accessToken, token.accessToken]);
+        expect(values, [token!.accessToken, token.accessToken]);
       });
       test('will be called on token refresh', () {
         testFakeAsync((fake) async {
@@ -627,7 +562,7 @@ void main() {
 
           var token2 = await mockApp.internals.getToken(true);
 
-          expect(values, [token1.accessToken, token2.accessToken]);
+          expect(values, [token1!.accessToken, token2!.accessToken]);
         });
       });
       test('will fire with the initial token if it exists', () async {
@@ -638,7 +573,7 @@ void main() {
         });
 
         var addAuthTokenListenerArgument = await completer.future;
-        expect(addAuthTokenListenerArgument, getTokenResult.accessToken);
+        expect(addAuthTokenListenerArgument, getTokenResult!.accessToken);
       });
     });
 
@@ -659,8 +594,7 @@ void main() {
 
           var token2 = await mockApp.internals.getToken(true);
 
-          expect(values,
-              [token1.accessToken, token1.accessToken, token2.accessToken]);
+          expect(values, [token1!.accessToken, token1.accessToken, token2!.accessToken]);
         });
       });
     });
@@ -669,9 +603,7 @@ void main() {
 
 void testFakeAsync(Function(FakeAsync) body) {
   fakeAsync((fake) {
-    Future.value()
-        .then((_) => body(fake))
-        .then(expectAsync1((_) => null, count: 1));
+    Future.value().then((_) => body(fake)).then(expectAsync1((_) => null, count: 1));
     fake.flushMicrotasks();
   });
 }

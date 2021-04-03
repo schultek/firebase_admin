@@ -1,18 +1,16 @@
 import 'dart:convert';
 
 import 'package:clock/clock.dart';
-
-import '../auth.dart';
-import '../app/app_extension.dart';
-import '../utils/api_request.dart';
-import '../utils/error.dart';
-
-import '../app.dart';
-import 'action_code_settings.dart';
-import '../utils/validator.dart' as validator;
+import 'package:collection/collection.dart';
 import 'package:http/http.dart';
 
-import 'package:collection/collection.dart';
+import '../app.dart';
+import '../app/app_extension.dart';
+import '../auth.dart';
+import '../utils/api_request.dart';
+import '../utils/error.dart';
+import '../utils/validator.dart' as validator;
+import 'action_code_settings.dart';
 
 class ApiClient {
   final Client httpClient;
@@ -27,22 +25,18 @@ class ApiClient {
   /// Firebase Auth request timeout duration in milliseconds.
   static const _firebaseAuthTimeout = Duration(milliseconds: 25000);
 
-  ApiClient(App app, String version, String projectId)
+  ApiClient(App app, String version, String? projectId)
       : httpClient = AuthorizedHttpClient(app, _firebaseAuthTimeout),
-        baseUrl =
-            'https://identitytoolkit.googleapis.com/$version/projects/$projectId';
+        baseUrl = 'https://identitytoolkit.googleapis.com/$version/projects/$projectId';
 
-  Future<Map<String, dynamic>> post(
-      String endpoint, Map<String, dynamic> body) async {
-    var response = await httpClient.post('$baseUrl$endpoint',
-        body: json.encode(body), headers: _firebaseAuthHeader);
+  Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> body) async {
+    var response =
+        await httpClient.post(Uri.parse('$baseUrl$endpoint'), body: json.encode(body), headers: _firebaseAuthHeader);
     return _handleResponse(response);
   }
 
-  Future<Map<String, dynamic>> get(
-      String endpoint, Map<String, dynamic> body) async {
-    var response = await httpClient.get(
-        Uri.parse('$baseUrl$endpoint').replace(queryParameters: body),
+  Future<Map<String, dynamic>> get(String endpoint, Map<String, dynamic> body) async {
+    var response = await httpClient.get(Uri.parse('$baseUrl$endpoint').replace(queryParameters: body),
         headers: _firebaseAuthHeader);
     return _handleResponse(response);
   }
@@ -67,12 +61,10 @@ class ApiClient {
 class AuthRequestHandler {
   final ApiClient apiClient;
 
-  static AuthRequestHandler Function(App app) factory =
-      (app) => AuthRequestHandler._(app);
+  static AuthRequestHandler Function(App app) factory = (app) => AuthRequestHandler._(app);
 
   factory AuthRequestHandler(App app) => factory(app);
-  AuthRequestHandler._(App app)
-      : apiClient = ApiClient(app, 'v1', app.projectId);
+  AuthRequestHandler._(App app) : apiClient = ApiClient(app, 'v1', app.projectId);
 
   /// Maximum allowed number of users to batch download at one time.
   static const maxDownloadAccountPageSize = 1000;
@@ -98,8 +90,7 @@ class AuthRequestHandler {
   }
 
   /// Looks up a user by phone number.
-  Future<Map<String, dynamic>> getAccountInfoByPhoneNumber(
-      String phoneNumber) async {
+  Future<Map<String, dynamic>> getAccountInfoByPhoneNumber(String phoneNumber) async {
     if (!validator.isPhoneNumber(phoneNumber)) {
       throw FirebaseAuthError.invalidPhoneNumber();
     }
@@ -108,8 +99,7 @@ class AuthRequestHandler {
     });
   }
 
-  Future<Map<String, dynamic>> _getAccountInfo(
-      Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> _getAccountInfo(Map<String, dynamic> request) async {
     var response = await apiClient.post('/accounts:lookup', request);
 
     if (!response.containsKey('users')) {
@@ -121,8 +111,7 @@ class AuthRequestHandler {
 
   /// Exports the users (single batch only) with a size of maxResults and
   /// starting from the offset as specified by pageToken.
-  Future<Map<String, dynamic>> downloadAccount(
-      int maxResults, String pageToken) async {
+  Future<Map<String, dynamic>> downloadAccount(int? maxResults, String? pageToken) async {
     // Validate next page token.
     if (pageToken != null && pageToken.isEmpty) {
       throw FirebaseAuthError.invalidPageToken();
@@ -150,8 +139,7 @@ class AuthRequestHandler {
 
     // If the localId is not returned, then the request failed.
     if (response['localId'] == null) {
-      throw FirebaseAuthError.internalError(
-          'INTERNAL ASSERT FAILED: Unable to create new user');
+      throw FirebaseAuthError.internalError('INTERNAL ASSERT FAILED: Unable to create new user');
     }
 
     return response['localId'];
@@ -159,7 +147,7 @@ class AuthRequestHandler {
 
   /// Deletes an account identified by a uid.
   Future<Map<String, dynamic>> deleteAccount(String uid) {
-    if (uid == null || !validator.isUid(uid)) {
+    if (!validator.isUid(uid)) {
       throw FirebaseAuthError.invalidUid();
     }
 
@@ -171,9 +159,8 @@ class AuthRequestHandler {
   }
 
   /// Edits an existing user.
-  Future<String> updateExistingAccount(
-      String uid, CreateEditAccountRequest request) async {
-    if (uid == null || !validator.isUid(uid)) {
+  Future<String> updateExistingAccount(String uid, CreateEditAccountRequest request) async {
+    if (!validator.isUid(uid)) {
       throw FirebaseAuthError.invalidUid();
     }
 
@@ -182,8 +169,7 @@ class AuthRequestHandler {
 
   /// Sets additional developer claims on an existing user identified by
   /// provided UID.
-  Future<String> setCustomUserClaims(
-      String uid, Map<String, dynamic> customUserClaims) async {
+  Future<String> setCustomUserClaims(String uid, Map<String, dynamic>? customUserClaims) async {
     // Validate user UID.
     if (!validator.isUid(uid)) {
       throw FirebaseAuthError.invalidUid();
@@ -192,8 +178,7 @@ class AuthRequestHandler {
     // Delete operation. Replace null with an empty object.
     customUserClaims ??= {};
 
-    return _setAccountInfo(
-        CreateEditAccountRequest(uid: uid, customAttributes: customUserClaims));
+    return _setAccountInfo(CreateEditAccountRequest(uid: uid, customAttributes: customUserClaims));
   }
 
   /// Revokes all refresh tokens for the specified user identified by the uid
@@ -213,13 +198,11 @@ class AuthRequestHandler {
     if (!validator.isUid(uid)) {
       throw FirebaseAuthError.invalidUid();
     }
-    return await _setAccountInfo(
-        CreateEditAccountRequest(uid: uid, validSince: clock.now()));
+    return await _setAccountInfo(CreateEditAccountRequest(uid: uid, validSince: clock.now()));
   }
 
   Future<String> _setAccountInfo(CreateEditAccountRequest request) async {
-    var response =
-        await apiClient.post('/accounts:update', request.toRequest());
+    var response = await apiClient.post('/accounts:update', request.toRequest());
 
     // If the localId is not returned, then the request failed.
     if (response['localId'] == null) {
@@ -242,8 +225,7 @@ class AuthRequestHandler {
   /// The optional [actionCodeSettings] defines whether the link is to be
   /// handled by a mobile app and the additional state information to be passed
   /// in the deep link, etc. Required when requestType == 'EMAIL_SIGNIN'
-  Future<String> getEmailActionLink(String requestType, String email,
-      {ActionCodeSettings actionCodeSettings}) async {
+  Future<String> getEmailActionLink(String requestType, String email, {ActionCodeSettings? actionCodeSettings}) async {
     if (!validator.isEmail(email)) {
       throw FirebaseAuthError.invalidEmail();
     }
@@ -257,11 +239,7 @@ class AuthRequestHandler {
       );
     }
 
-    var request = {
-      'requestType': requestType,
-      'email': email,
-      'returnOobLink': true
-    };
+    var request = {'requestType': requestType, 'email': email, 'returnOobLink': true};
     // ActionCodeSettings required for email link sign-in to determine the url where the sign-in will
     // be completed.
     if (actionCodeSettings == null && requestType == 'EMAIL_SIGNIN') {
@@ -272,15 +250,14 @@ class AuthRequestHandler {
     if (actionCodeSettings != null || requestType == 'EMAIL_SIGNIN') {
       request = {
         ...request,
-        ...actionCodeSettings.buildRequest(),
+        ...actionCodeSettings!.buildRequest(),
       };
     }
     var response = await apiClient.post('/accounts:sendOobCode', request);
 
     // If the oobLink is not returned, then the request failed.
     if (response['oobLink'] == null) {
-      throw FirebaseAuthError.internalError(
-          'INTERNAL ASSERT FAILED: Unable to create the email action link');
+      throw FirebaseAuthError.internalError('INTERNAL ASSERT FAILED: Unable to create the email action link');
     }
 
     // Return the link.
@@ -291,16 +268,16 @@ class AuthRequestHandler {
 class UploadAccountRequest extends CreateEditAccountRequest {}
 
 class CreateEditAccountRequest {
-  final bool disabled;
-  final String displayName;
-  final String email;
-  final bool emailVerified;
-  final String password;
-  final String phoneNumber;
-  final String photoUrl;
-  final String uid;
-  final String customAttributes;
-  final DateTime validSince;
+  final bool? disabled;
+  final String? displayName;
+  final String? email;
+  final bool? emailVerified;
+  final String? password;
+  final String? phoneNumber;
+  final String? photoUrl;
+  final String? uid;
+  final String? customAttributes;
+  final DateTime? validSince;
 
   static const _reservedClaims = [
     'acr',
@@ -343,7 +320,7 @@ class CreateEditAccountRequest {
     // Check claims payload does not exceed maxmimum size.
     if (s.length > _maxClaimsPayloadSize) {
       throw FirebaseAuthError.claimsTooLarge(
-        'Developer claims payload should not exceed ${_maxClaimsPayloadSize} characters.',
+        'Developer claims payload should not exceed $_maxClaimsPayloadSize characters.',
       );
     }
 
@@ -360,10 +337,8 @@ class CreateEditAccountRequest {
       this.photoUrl,
       this.uid,
       this.validSince,
-      Map<String, dynamic> customAttributes})
-      : customAttributes = customAttributes == null
-            ? null
-            : _stringifyClaims(customAttributes) {
+      Map<String, dynamic>? customAttributes})
+      : customAttributes = customAttributes == null ? null : _stringifyClaims(customAttributes) {
     if (disabled == null &&
         displayName == null &&
         email == null &&
@@ -376,22 +351,21 @@ class CreateEditAccountRequest {
       throw FirebaseAuthError.invalidArgument();
     }
 
-    if ((uid != null || this is UploadAccountRequest) &&
-        !validator.isUid(uid)) {
+    if ((uid != null || this is UploadAccountRequest) && !validator.isUid(uid!)) {
       // This is called localId on the backend but the developer specifies this as
       // uid externally. So the error message should use the client facing name.
       throw FirebaseAuthError.invalidUid();
     }
     // email should be a string and a valid email.
-    if (email != null && !validator.isEmail(email)) {
+    if (email != null && !validator.isEmail(email!)) {
       throw FirebaseAuthError.invalidEmail();
     }
     // phoneNumber should be a string and a valid phone number.
-    if (phoneNumber != null && !validator.isPhoneNumber(phoneNumber)) {
+    if (phoneNumber != null && !validator.isPhoneNumber(phoneNumber!)) {
       throw FirebaseAuthError.invalidPhoneNumber();
     }
     // password should be a string and a minimum of 6 chars.
-    if (password != null && !validator.isPassword(password)) {
+    if (password != null && !validator.isPassword(password!)) {
       throw FirebaseAuthError.invalidPassword();
     }
     // rawPassword should be a string and a minimum of 6 chars.
@@ -403,7 +377,7 @@ class CreateEditAccountRequest {
     }
 */
     // photoUrl should be a URL.
-    if (photoUrl != null && !validator.isUrl(photoUrl)) {
+    if (photoUrl != null && !validator.isUrl(photoUrl!)) {
       // This is called photoUrl on the backend but the developer specifies this as
       // photoURL externally. So the error message should use the client facing name.
       throw FirebaseAuthError.invalidPhotoUrl();
@@ -453,35 +427,26 @@ class CreateEditAccountRequest {
 
   Map<String, dynamic> toRequest() => {
         'disabled': disabled,
-        if (displayName != '')
-          'displayName': displayName,
+        if (displayName != '') 'displayName': displayName,
         'email': email,
         'emailVerified': emailVerified,
         'password': password,
-        if (phoneNumber != '')
-          'phoneNumber': phoneNumber,
-        if (photoUrl != '')
-          'photoUrl': photoUrl,
+        if (phoneNumber != '') 'phoneNumber': phoneNumber,
+        if (photoUrl != '') 'photoUrl': photoUrl,
         'localId': uid,
         // For deleting displayName or photoURL, these values must be passed as null.
         // They will be removed from the backend request and an additional parameter
         // deleteAttribute: ['PHOTO_URL', 'DISPLAY_NAME']
         // with an array of the parameter names to delete will be passed.
-        'deleteAttribute': [
-          if (displayName == '') 'DISPLAY_NAME',
-          if (photoUrl == '') 'PHOTO_URL'
-        ],
+        'deleteAttribute': [if (displayName == '') 'DISPLAY_NAME', if (photoUrl == '') 'PHOTO_URL'],
         // For deleting phoneNumber, this value must be passed as null.
         // It will be removed from the backend request and an additional parameter
         // deleteProvider: ['phone'] with an array of providerIds (phone in this case),
         // will be passed.
         // Currently this applies to phone provider only.
-        if (phoneNumber == '')
-          'deleteProvider': ['phone'],
-        if (customAttributes != null)
-          'customAttributes': customAttributes,
-        if (validSince != null)
-          'validSince': validSince.millisecondsSinceEpoch ~/ 1000
+        if (phoneNumber == '') 'deleteProvider': ['phone'],
+        if (customAttributes != null) 'customAttributes': customAttributes,
+        if (validSince != null) 'validSince': validSince!.millisecondsSinceEpoch ~/ 1000
       };
 
   @override
@@ -489,6 +454,5 @@ class CreateEditAccountRequest {
 
   @override
   bool operator ==(other) =>
-      other is CreateEditAccountRequest &&
-      const DeepCollectionEquality().equals(toRequest(), other.toRequest());
+      other is CreateEditAccountRequest && const DeepCollectionEquality().equals(toRequest(), other.toRequest());
 }

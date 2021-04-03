@@ -16,7 +16,7 @@ class AuthorizedHttpClient extends BaseClient {
   Future<StreamedResponse> send(BaseRequest request) async {
     var accessTokenObj = await app.internals.getToken();
 
-    request.headers['Authorization'] = 'Bearer ${accessTokenObj.accessToken}';
+    request.headers['Authorization'] = 'Bearer ${accessTokenObj?.accessToken}';
 
     return client.send(request).timeout(timeout);
   }

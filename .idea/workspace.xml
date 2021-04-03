@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="4da7274d-d83c-42d1-a588-81169bbccf70" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/example/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/example/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/admin.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/admin.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/app.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/app.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/app/app.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/app/app.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/app/app_extension.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/app/app_extension.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/auth.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/auth.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/auth/action_code_settings.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/auth/action_code_settings.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/auth/auth_api_request.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/auth/auth_api_request.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/auth/credential.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/auth/credential.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/auth/token_generator.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/auth/token_generator.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/auth/token_verifier.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/auth/token_verifier.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/auth/user_record.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/auth/user_record.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/credential.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/credential.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/database.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/storage.dart" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/utils/api_request.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/utils/api_request.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/utils/error.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/utils/error.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/src/utils/validator.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/utils/validator.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/firebase_admin_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/firebase_admin_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/resources/mocks.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/resources/mocks.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/src/app.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/src/app.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/src/auth.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/src/auth.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/src/storage.dart" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1qfpJBaBTRXxwulCfDzTDtUmLNN" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="project.structure.last.edited" value="SDKs" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="dart.settings" />
+    <property name="show.migrate.to.gradle.popup" value="false" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="4da7274d-d83c-42d1-a588-81169bbccf70" name="Default Changelist" comment="" />
+      <created>1617480425508</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1617480425508</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="458" y="201" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1617485980272">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="458" y="201" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1440.900@0.0.1440.900" timestamp="1617485980272" />
+    <state x="229" y="57" key="SettingsEditor" timestamp="1617486235198">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="229" y="57" key="SettingsEditor/0.0.1440.900@0.0.1440.900" timestamp="1617486235198" />
+    <state x="421" y="205" width="597" height="490" key="find.popup" timestamp="1617486026607">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="421" y="205" width="597" height="490" key="find.popup/0.0.1440.900@0.0.1440.900" timestamp="1617486026607" />
+    <state x="385" y="217" width="670" height="676" key="search.everywhere.popup" timestamp="1617484536468">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="385" y="217" width="670" height="676" key="search.everywhere.popup/0.0.1440.900@0.0.1440.900" timestamp="1617484536468" />
+  </component>
+</project>

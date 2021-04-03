@@ -1,35 +1,34 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:firebase_admin/src/utils/error.dart';
 
 import '../credential.dart';
-import 'package:clock/clock.dart';
 
 class FirebaseAppInternals {
-  final Credential credential;
+  final Credential? credential;
   bool _isDeleted = false;
 
-  AccessToken _cachedToken;
-  Future<AccessToken> _cachedTokenFuture;
-  Timer _tokenRefreshTimeout;
-  final List<void Function(String token)> _tokenListeners = [];
+  AccessToken? _cachedToken;
+  Future<AccessToken?>? _cachedTokenFuture;
+  Timer? _tokenRefreshTimeout;
+  final List<void Function(String? token)> _tokenListeners = [];
 
   FirebaseAppInternals(this.credential);
   bool get isDeleted => _isDeleted;
 
   /// Gets an auth token for the associated app.
-  Future<AccessToken> getToken([bool forceRefresh = false]) {
-    var expired = _cachedToken == null ||
-        _cachedToken.expirationTime.isBefore(clock.now());
+  Future<AccessToken?> getToken([bool forceRefresh = false]) {
+    var expired = _cachedToken?.expirationTime?.isBefore(clock.now()) ?? true;
 
     if (_cachedTokenFuture != null && !forceRefresh && !expired) {
-      return _cachedTokenFuture.catchError((error) {
+      return _cachedTokenFuture!.catchError((error) {
         // Update the cached token future to avoid caching errors. Set it to resolve with the
         // cached token if we have one (and return that future since the token has still not
         // expired).
         if (_cachedToken != null) {
           _cachedTokenFuture = Future.value(_cachedToken);
-          return _cachedTokenFuture;
+          return _cachedTokenFuture!;
         }
 
         // Otherwise, set the cached token future to null so that it will force a refresh next
@@ -46,59 +45,55 @@ class FirebaseAppInternals {
       // this.credential_ may be an external class; resolving it in a future helps us
       // protect against exceptions and upgrades the result to a future in all cases.
       _cachedTokenFuture = Future.microtask(() async {
-        var token = await credential.getAccessToken();
+        var token = await credential!.getAccessToken();
         // Since the developer can provide the credential implementation, we want to weakly verify
         // the return type until the type is properly exported.
-        if (token.accessToken == null || token.expirationTime == null) {
-          throw FirebaseAppError.invalidCredential(
-              'Invalid access token generated');
+        if (token != null && (token.accessToken == null || token.expirationTime == null)) {
+          throw FirebaseAppError.invalidCredential('Invalid access token generated');
         }
-        var hasAccessTokenChanged =
-            _cachedToken?.accessToken != token.accessToken;
-        var hasExpirationChanged =
-            _cachedToken?.expirationTime != token.expirationTime;
-        if (_cachedToken == null ||
-            hasAccessTokenChanged ||
-            hasExpirationChanged) {
+        var hasAccessTokenChanged = _cachedToken?.accessToken != token?.accessToken;
+        var hasExpirationChanged = _cachedToken?.expirationTime != token?.expirationTime;
+        if (_cachedToken == null || hasAccessTokenChanged || hasExpirationChanged) {
           _cachedToken = token;
           _tokenListeners.forEach((listener) {
-            listener(token.accessToken);
+            listener(token?.accessToken);
           });
         }
 
-        var expiresIn = token.expirationTime?.difference(clock.now());
-        // Establish a timeout to proactively refresh the token every minute starting at five
-        // minutes before it expires. Once a token refresh succeeds, no further retries are
-        // needed; if it fails, retry every minute until the token expires (resulting in a total
-        // of four retries: at 4, 3, 2, and 1 minutes).
-        var refreshTime = expiresIn - Duration(minutes: 5);
-        var numRetries = 4;
+        var expiresIn = token?.expirationTime?.difference(clock.now());
 
-        // In the rare cases the token is short-lived (that is, it expires in less than five
-        // minutes from when it was fetched), establish the timeout to refresh it after the
-        // current minute ends and update the number of retries that should be attempted before
-        // the token expires.
-        if (refreshTime.isNegative) {
-          refreshTime = Duration(seconds: expiresIn.inSeconds % 60);
-          numRetries = expiresIn.inMinutes - 1;
-        }
+        if (expiresIn != null) {
+          // Establish a timeout to proactively refresh the token every minute starting at five
+          // minutes before it expires. Once a token refresh succeeds, no further retries are
+          // needed; if it fails, retry every minute until the token expires (resulting in a total
+          // of four retries: at 4, 3, 2, and 1 minutes).
+          var refreshTime = expiresIn - Duration(minutes: 5);
+          var numRetries = 4;
 
-        // The token refresh timeout keeps the Node.js process alive, so only create it if this
-        // instance has not already been deleted.
-        if (numRetries != 0 && !_isDeleted) {
-          _setTokenRefreshTimeout(refreshTime, numRetries);
+          // In the rare cases the token is short-lived (that is, it expires in less than five
+          // minutes from when it was fetched), establish the timeout to refresh it after the
+          // current minute ends and update the number of retries that should be attempted before
+          // the token expires.
+          if (refreshTime.isNegative) {
+            refreshTime = Duration(seconds: expiresIn.inSeconds % 60);
+            numRetries = expiresIn.inMinutes - 1;
+          }
+
+          // The token refresh timeout keeps the Node.js process alive, so only create it if this
+          // instance has not already been deleted.
+          if (numRetries != 0 && !_isDeleted) {
+            _setTokenRefreshTimeout(refreshTime, numRetries);
+          }
         }
 
         return token;
       }).catchError((error, tr) {
-        var errorMessage =
-            'Credential implementation provided to initializeApp() via the '
+        var errorMessage = 'Credential implementation provided to initializeApp() via the '
             '"credential" property failed to fetch a valid Google OAuth2 access token with the '
             'following error: "${error is FirebaseException ? error.message : error}".';
 
         if (errorMessage.contains('invalid_grant')) {
-          errorMessage +=
-              ' There are two likely causes: (1) your server time is not properly '
+          errorMessage += ' There are two likely causes: (1) your server time is not properly '
               'synced or (2) your certificate key file has been revoked. To solve (1), re-sync the '
               'time on your server. To solve (2), make sure the key ID for your key file is still '
               'present at https://console.firebase.google.com/iam-admin/serviceaccounts/project. If '
@@ -109,15 +104,15 @@ class FirebaseAppInternals {
         throw FirebaseAppError.invalidCredential(errorMessage);
       }, test: (e) => e is! FirebaseException);
 
-      return _cachedTokenFuture;
+      return _cachedTokenFuture!;
     }
   }
 
   /// Adds a listener that is called each time a token changes.
-  void addAuthTokenListener(void Function(String token) listener) {
+  void addAuthTokenListener(void Function(String? token) listener) {
     _tokenListeners.add(listener);
     if (_cachedToken != null) {
-      listener(_cachedToken.accessToken);
+      listener(_cachedToken!.accessToken);
     }
   }
 

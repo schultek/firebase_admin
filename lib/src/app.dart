@@ -1,15 +1,13 @@
 import 'dart:async';
 
-import 'package:firebase_admin/src/storage.dart';
+import 'package:meta/meta.dart';
 
 import '../firebase_admin.dart';
 import 'app/app.dart';
-import 'database.dart';
-import 'utils/error.dart';
-import 'service.dart';
 import 'auth.dart';
 import 'credential.dart';
-import 'package:meta/meta.dart';
+import 'service.dart';
+import 'utils/error.dart';
 
 /// Represents initialized Firebase application and provides access to the
 /// app's services.
@@ -49,12 +47,6 @@ class App {
   /// Gets the [Auth] service for this application.
   Auth auth() => _getService(() => Auth(this));
 
-  /// Gets Realtime [Database] client for this application.
-  Database database() => _getService(() => Database(this));
-
-  /// Gets [Storage] service for this application.
-  Storage storage() => _getService(() => Storage(this));
-
   /// Renders this app unusable and frees the resources of all associated
   /// services.
   Future<void> delete() async {
@@ -69,14 +61,14 @@ class App {
 
   T _getService<T extends FirebaseService>(T Function() factory) {
     _checkDestroyed();
-    return _services[T] ??= factory();
+    return (_services[T] ??= factory()) as T;
   }
 
   /// Throws an Error if the FirebaseApp instance has already been deleted.
   void _checkDestroyed() {
     if (internals.isDeleted) {
       throw FirebaseAppError.appDeleted(
-        'Firebase app named "${_name}" has already been deleted.',
+        'Firebase app named "$_name" has already been deleted.',
       );
     }
   }
@@ -95,16 +87,16 @@ class AppOptions {
   /// - [applicationDefaultCredential]
   /// - [cert]
   /// - [refreshToken]
-  final Credential credential;
+  final Credential? credential;
 
   /// The URL of the Realtime Database from which to read and write data.
-  final String databaseUrl;
+  final String? databaseUrl;
 
   /// The ID of the Google Cloud project associated with the App.
-  final String projectId;
+  final String? projectId;
 
   /// The name of the default Cloud Storage bucket associated with the App.
-  final String storageBucket;
+  final String? storageBucket;
 
   AppOptions({
     this.credential,
