@@ -8,6 +8,8 @@ import 'auth/auth_api_request.dart';
 import 'auth/user_record.dart';
 import 'service.dart';
 
+export 'auth/user_record.dart';
+
 /// The Firebase Auth service interface.
 class Auth implements FirebaseService {
   @override
