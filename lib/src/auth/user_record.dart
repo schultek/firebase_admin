@@ -13,13 +13,12 @@ class UserMetadata {
       : this(
             creationTime:
                 map['createdAt'] == null ? null : DateTime.fromMillisecondsSinceEpoch(int.parse(map['createdAt'])),
-            lastSignInTime: map['lastSignInTime'] == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(int.parse(map['lastSignInTime'])));
+            lastSignInTime:
+                map['lastLoginAt'] == null ? null : DateTime.fromMillisecondsSinceEpoch(int.parse(map['lastLoginAt'])));
 
   Map<String, dynamic> toJson() {
     return {
-      'lastSignInTime': lastSignInTime?.toIso8601String(),
+      'lastLoginAt': lastSignInTime?.toIso8601String(),
       'creationTime': creationTime?.toIso8601String(),
     };
   }
