@@ -79,6 +79,16 @@ class AuthRequestHandler {
     });
   }
 
+  /// Looks up users by their uids.
+  Future<Map<String, dynamic>> getAccountInfoByUids(List<String> uids) async {
+    if (uids.any((uid) => !validator.isUid(uid))) {
+      throw FirebaseAuthError.invalidUid();
+    }
+    return _getAccountInfo({
+      'localId': uids,
+    });
+  }
+
   /// Looks up a user by email.
   Future<Map<String, dynamic>> getAccountInfoByEmail(String email) async {
     if (!validator.isEmail(email)) {

@@ -37,6 +37,15 @@ class Auth implements FirebaseService {
     return UserRecord.fromJson(response['users'][0]);
   }
 
+  /// Gets the user data for the users corresponding to the given [uids].
+  Future<List<UserRecord>> getUsers(List<String> uids) async {
+    var response = await _authRequestHandler.getAccountInfoByUids(uids);
+    // Returns the user record populated with server response.
+    return (response['users'] as List)
+        .map((u) => UserRecord.fromJson(u))
+        .toList();
+  }
+
   /// Looks up the user identified by the provided email and returns a future
   /// that is fulfilled with a user record for the given user if that user is
   /// found.
